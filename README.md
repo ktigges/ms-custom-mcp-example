@@ -21,19 +21,27 @@ If Prompt Shields or Purview blocks the prompt, Graph is not called. If
 Purview blocks the response, Graph data is not returned to Copilot.
 
 ```mermaid
-flowchart LR
-    A[Copilot or agent] --> B[Optional APIM gateway]
-    B --> C[Custom MCP wrapper]
-    C --> D[Prompt Shields]
-    D --> E[Purview prompt check]
-    E --> F{Allowed?}
-    F -->|No| G[Block and log]
-    F -->|Yes| H[Microsoft Graph]
-    H --> I[Purview response check]
-    I --> J[Return approved response]
-    C -.-> K[Sentinel]
+flowchart TB
+    A[Copilot or agent]
+    B[Optional APIM]
+    C[Custom MCP wrapper]
+    D[Prompt Shields]
+    E[Purview prompt check]
+    F{Allowed?}
+    G[Block and log]
+    H[Microsoft Graph]
+    I[Purview response check]
+    J[Return approved response]
+    K[Sentinel investigation timeline]
+
+    A --> B --> C --> D --> E --> F
+    F -->|No| G
+    F -->|Yes| H --> I --> J
+
+    C -.-> K
     D -.-> K
     E -.-> K
+    G -.-> K
     H -.-> K
     I -.-> K
 ```
