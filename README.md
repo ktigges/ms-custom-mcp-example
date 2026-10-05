@@ -20,6 +20,24 @@ Prompt Shields -> Purview prompt check -> Graph -> Purview response check
 If Prompt Shields or Purview blocks the prompt, Graph is not called. If
 Purview blocks the response, Graph data is not returned to Copilot.
 
+```mermaid
+flowchart LR
+    A[Copilot or agent] --> B[Optional APIM gateway]
+    B --> C[Custom MCP wrapper]
+    C --> D[Prompt Shields]
+    D --> E[Purview prompt check]
+    E --> F{Allowed?}
+    F -->|No| G[Block and log]
+    F -->|Yes| H[Microsoft Graph]
+    H --> I[Purview response check]
+    I --> J[Return approved response]
+    C -.-> K[Sentinel]
+    D -.-> K
+    E -.-> K
+    H -.-> K
+    I -.-> K
+```
+
 ## Purpose of this test
 
 Cowork or another agent may call Microsoft Graph directly instead of going
@@ -38,9 +56,8 @@ an agent calls Graph outside the native Copilot pipeline.
 
 ## Authentication
 
-The user signs in through Microsoft Entra ID. APIM validates that the token is
-for the correct tenant, application, and scope, then passes it to the custom
-MCP wrapper.
+The user signs in through Microsoft Entra ID and the client sends the token to
+the custom MCP service through the selected protected ingress.
 
 The wrapper uses the user's token and its own application identity to request a
 Microsoft Graph token on behalf of that user. Graph only allows actions that
@@ -49,6 +66,11 @@ both the user and the custom application are permitted to perform.
 The `acquireGraphToken` method represents this exchange. The actual tenant,
 application ID, credential, and tokens come from protected runtime
 configuration and are not stored in this repository.
+
+APIM is not required to run the custom MCP server. In the tested design, APIM
+provided centralized token validation, rate limiting, correlation IDs,
+routing, and approved request and response telemetry. Another protected ingress
+could be used if it provides the required authentication and security controls.
 
 ## Build steps
 
@@ -69,7 +91,6 @@ Typical runtime settings:
 AZURE_TENANT_ID
 AZURE_CLIENT_ID
 AZURE_CLIENT_SECRET
-APIM_BACKEND_SHARED_SECRET
 APPLICATIONINSIGHTS_CONNECTION_STRING
 CONTENT_SAFETY_ENDPOINT
 CONTENT_SAFETY_API_KEY
@@ -113,7 +134,6 @@ services:
       AZURE_TENANT_ID: "${AZURE_TENANT_ID}"
       AZURE_CLIENT_ID: "${AZURE_CLIENT_ID}"
       AZURE_CLIENT_SECRET: "${AZURE_CLIENT_SECRET}"
-      APIM_BACKEND_SHARED_SECRET: "${APIM_BACKEND_SHARED_SECRET}"
       APPLICATIONINSIGHTS_CONNECTION_STRING: "${APPLICATIONINSIGHTS_CONNECTION_STRING}"
       CONTENT_SAFETY_ENDPOINT: "${CONTENT_SAFETY_ENDPOINT}"
       CONTENT_SAFETY_API_KEY: "${CONTENT_SAFETY_API_KEY}"
@@ -128,5 +148,5 @@ docker compose --env-file .env up -d --build
 curl http://127.0.0.1:3000/health
 ```
 
-APIM can then route the customer-facing MCP endpoint to this container through
-the selected private or public ingress method.
+APIM may be placed in front of the container when centralized gateway controls
+and telemetry are wanted, but it is not required by the MCP server.
