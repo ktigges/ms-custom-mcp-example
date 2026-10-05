@@ -32,7 +32,7 @@ flowchart TB
     H[Microsoft Graph]
     I[Purview response check]
     J[Return approved response]
-    K[Sentinel investigation timeline]
+    K[SIEM or central security logging]
 
     A --> B --> C --> D --> E --> F
     F -->|No| G
