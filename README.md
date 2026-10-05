@@ -20,7 +20,7 @@ Prompt Shields -> Purview prompt check -> Graph -> Purview response check
 If Prompt Shields or Purview blocks the prompt, Graph is not called. If
 Purview blocks the response, Graph data is not returned to Copilot.
 
-## Why this helps
+## Purpose of this test
 
 Cowork or another agent may call Microsoft Graph directly instead of going
 through the native Copilot pipeline. In that case, we cannot assume the
@@ -50,18 +50,18 @@ The `acquireGraphToken` method represents this exchange. The actual tenant,
 application ID, credential, and tokens come from protected runtime
 configuration and are not stored in this repository.
 
-## Required to make this a standalone repository
+## Build steps
 
-Add:
+To build this example into a running MCP container:
 
-- `package.json` with the MCP SDK, Zod, TypeScript, and Microsoft identity
-  dependencies.
-- `tsconfig.json` that compiles `*.ts` files into `dist/`.
-- `index.ts` that exposes `/health` and `/mcp` using MCP Streamable HTTP.
-- A concrete `GovernedM365Service` implementation for OBO authentication,
-  Microsoft Graph, and the existing Purview APIs.
-- Runtime configuration supplied through environment variables or a secret
-  store. Do not put credentials in source control.
+1. Add the Node.js package file with the MCP SDK, Zod, TypeScript, and
+   Microsoft identity dependencies.
+2. Add the TypeScript build configuration.
+3. Add the HTTP entry point that exposes `/health` and `/mcp`.
+4. Connect `GovernedM365Service` to the existing OBO, Graph, and Purview code.
+5. Supply runtime settings from protected environment variables or a secret
+   store.
+6. Build and start the image using the Dockerfile and Compose examples below.
 
 Typical runtime settings:
 
