@@ -36,6 +36,20 @@ This does not replace Entra, Graph, Exchange, or other Microsoft 365 controls.
 It adds the application-level inspection and logging that may be missing when
 an agent calls Graph outside the native Copilot pipeline.
 
+## Authentication
+
+The user signs in through Microsoft Entra ID. APIM validates that the token is
+for the correct tenant, application, and scope, then passes it to the custom
+MCP wrapper.
+
+The wrapper uses the user's token and its own application identity to request a
+Microsoft Graph token on behalf of that user. Graph only allows actions that
+both the user and the custom application are permitted to perform.
+
+The `acquireGraphToken` method represents this exchange. The actual tenant,
+application ID, credential, and tokens come from protected runtime
+configuration and are not stored in this repository.
+
 ## Required to make this a standalone repository
 
 Add:
