@@ -20,6 +20,12 @@ Prompt Shields -> Purview prompt check -> Graph -> Purview response check
 If Prompt Shields or Purview blocks the prompt, Graph is not called. If
 Purview blocks the response, Graph data is not returned to Copilot.
 
+Prompt Shields is a built-in managed capability of Azure AI Content Safety.
+We do not create or maintain the jailbreak and prompt-injection detection
+model. The custom MCP code only calls the Prompt Shields service, reads its
+verdict, blocks the request when required, and records the decision for
+security logging.
+
 ```mermaid
 flowchart TB
     A[Copilot or agent]
@@ -54,7 +60,7 @@ Copilot-specific prompt inspection, response inspection, or interaction logs
 will be available.
 
 This custom MCP server provides a controlled route for those calls. It checks
-the prompt for jailbreak or prompt-injection attacks, submits it to Purview,
+the prompt using the built-in Prompt Shields service, submits it to Purview,
 allows only the Graph tools and permissions defined in code, checks the Graph
 result before returning it, and records the full correlation trail.
 
