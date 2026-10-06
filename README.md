@@ -26,6 +26,55 @@ model. The custom MCP code only calls the Prompt Shields service, reads its
 verdict, blocks the request when required, and records the decision for
 security logging.
 
+## Before and after
+
+### Before: native Work IQ tool paths
+
+Native Work IQ exposes two materially different paths. The `ask` and
+`list_agents` tools invoke Microsoft 365 Copilot and can produce a native
+Purview `CopilotInteraction`. Microsoft-managed grounding can retrieve
+Microsoft 365 context without exposing each downstream lookup as a direct
+tenant-visible Graph URI.
+
+The remaining Work IQ tools use direct Microsoft Graph operations. Those calls
+can appear in `MicrosoftGraphActivityLogs` and the applicable Microsoft 365
+workload audit logs, but they do not normally create a native
+`CopilotInteraction`.
+
+```mermaid
+flowchart TB
+    A[User through Copilot CLI, VS Code, or another agent]
+    B[Native Work IQ MCP]
+    C{Selected Work IQ tool}
+    D[ask or list_agents]
+    E[Microsoft 365 Copilot]
+    F[Microsoft-managed grounding and retrieval]
+    G[Purview CopilotInteraction]
+    H[fetch, fetch_blob, call_function, or mutation tool]
+    I[Direct Microsoft Graph request]
+    J[Exchange, SharePoint, OneDrive, Teams, or other workload]
+    K[MicrosoftGraphActivityLogs]
+    L[Microsoft 365 workload audit]
+
+    A --> B --> C
+    C --> D --> E --> F --> J
+    E -.-> G
+    C --> H --> I --> J
+    I -.-> K
+    J -.-> L
+```
+
+The Copilot-backed path may show the Work IQ `/mcp` request and a
+`CopilotInteraction` without showing a separate direct Graph endpoint for
+every resource used during grounding. The direct-tool path provides Graph and
+workload evidence but normally lacks the native Copilot interaction record.
+
+### After: customer-controlled Graph route
+
+The custom MCP provides an alternative route for Graph-backed tools that need
+consistent prompt inspection, response inspection, an explicit tool allowlist,
+and customer-controlled correlation telemetry.
+
 ```mermaid
 flowchart TB
     A[Copilot or agent]
@@ -51,6 +100,10 @@ flowchart TB
     H -.-> K
     I -.-> K
 ```
+
+This solution does not intercept or replace Microsoft-hosted Work IQ
+`ask`/`list_agents` traffic. It gives customers a controlled path for approved
+Graph operations and records the additional evidence at that boundary.
 
 ## Purpose of this test
 
